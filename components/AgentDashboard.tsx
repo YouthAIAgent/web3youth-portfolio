@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, FC } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { AGENTS } from '@/lib/constants'
 
 const AgentDashboard: FC = () => {
@@ -15,99 +15,108 @@ const AgentDashboard: FC = () => {
           observer.disconnect()
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     )
     if (ref.current) observer.observe(ref.current)
     return () => observer.disconnect()
   }, [])
 
-  const getStatusColors = (color: string) => {
-    switch (color) {
-      case 'green': return { dot: 'bg-neon-green', text: 'text-neon-green', border: 'border-neon-green/30', glow: 'glow-green', bar: 'bg-neon-green' }
-      case 'cyan': return { dot: 'bg-neon-cyan', text: 'text-neon-cyan', border: 'border-neon-cyan/30', glow: 'glow-cyan', bar: 'bg-neon-cyan' }
-      case 'amber': return { dot: 'bg-neon-amber', text: 'text-neon-amber', border: 'border-neon-amber/30', glow: 'glow-amber', bar: 'bg-neon-amber' }
-      case 'magenta': return { dot: 'bg-neon-magenta', text: 'text-neon-magenta', border: 'border-neon-magenta/30', glow: 'glow-magenta', bar: 'bg-neon-magenta' }
-      default: return { dot: 'bg-neon-green', text: 'text-neon-green', border: 'border-neon-green/30', glow: 'glow-green', bar: 'bg-neon-green' }
-    }
-  }
-
   return (
-    <section id="agents" ref={ref} className="relative z-10 py-20 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Section header */}
-        <div className={`mb-12 ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}>
-          <p className="text-gray-500 text-sm mb-2 tracking-widest">{'// autonomous_agents'}</p>
-          <h2 className="text-3xl md:text-4xl font-bold neon-cyan">
-            Agent Status Dashboard
+    <section id="agents" ref={ref} className="relative z-10 py-16 px-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className={`mb-6 ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}>
+          <h2 className="text-xl md:text-2xl font-bold text-[#00ffd5] text-glow-cyan">
+            {'>'} LIVE SYSTEMS
           </h2>
-          <p className="text-gray-400 mt-3 max-w-2xl">
-            Real-time monitoring of autonomous AI agents operating 24/7 on Solana.
+          <p className="text-[#475569] text-xs mt-1.5">
+            Autonomous agents. No human supervision.
           </p>
         </div>
 
-        {/* Agent cards grid */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {AGENTS.map((agent, i) => {
-            const colors = getStatusColors(agent.statusColor)
-            return (
-              <div
-                key={i}
-                className={`glass p-6 rounded-xl border ${colors.border} ${colors.glow} card-hover
-                  ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}
-                style={{ animationDelay: `${i * 150}ms` }}
-              >
-                {/* Agent header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{agent.icon}</span>
-                    <div>
-                      <h3 className="text-white font-semibold">{agent.name}</h3>
-                      <p className="text-gray-500 text-xs">{agent.task}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`text-xs font-mono font-bold ${colors.text}`}>
-                      {agent.status}
-                    </span>
-                    <div className={`pulse-dot ${colors.dot}`} />
-                  </div>
-                </div>
-
-                {/* Mini activity graph */}
-                <div className="flex items-end space-x-1 h-12 mb-4">
-                  {agent.activity.map((val, j) => (
+        {/* 2x2 Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {AGENTS.map((agent, i) => (
+            <div
+              key={agent.name}
+              className={`bg-[#060a14] border border-white/[0.06] rounded-lg p-4 transition-all duration-300 hover:border-white/[0.12] ${
+                isVisible ? 'animate-fade-in' : 'opacity-0'
+              }`}
+              style={{ animationDelay: `${i * 100 + 200}ms` }}
+            >
+              <div className="flex items-start justify-between mb-2.5">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
                     <div
-                      key={j}
-                      className={`flex-1 rounded-sm ${colors.bar} transition-all duration-500`}
-                      style={{
-                        height: isVisible ? `${val}%` : '0%',
-                        opacity: 0.3 + (val / 100) * 0.7,
-                        transitionDelay: `${j * 50 + i * 200}ms`,
-                      }}
+                      className="pulse-dot flex-shrink-0"
+                      style={{ backgroundColor: agent.color }}
                     />
-                  ))}
+                    <h3 className="text-[#e2e8f0] text-sm font-medium truncate">
+                      {agent.name}
+                    </h3>
+                  </div>
+                  <p className="text-[#475569] text-[11px] mt-1 ml-5">{agent.task}</p>
                 </div>
-
-                {/* Progress bar */}
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="text-gray-500">Capacity</span>
-                  <span className={colors.text}>{agent.progress}%</span>
-                </div>
-                <div className="w-full h-1.5 bg-navy-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${colors.bar} transition-all duration-1000 ease-out`}
-                    style={{
-                      width: isVisible ? `${agent.progress}%` : '0%',
-                      transitionDelay: `${i * 200}ms`,
-                    }}
-                  />
-                </div>
+                <span
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 uppercase tracking-wider"
+                  style={{
+                    color: agent.color,
+                    borderColor: `${agent.color}25`,
+                    backgroundColor: `${agent.color}08`,
+                  }}
+                >
+                  {agent.status}
+                </span>
               </div>
-            )
-          })}
+
+              {/* Sparkline */}
+              <div className="mb-2">
+                <Sparkline data={agent.sparkline} color={agent.color} />
+              </div>
+
+              {/* Uptime */}
+              <p className="text-[#334155] text-[10px] font-mono">
+                uptime: <span className="text-[#64748b]">{agent.uptime}</span>
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
+  )
+}
+
+const Sparkline: FC<{ data: number[]; color: string }> = ({ data, color }) => {
+  const width = 200
+  const height = 24
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const range = max - min || 1
+
+  const points = data.map((val, i) => {
+    const x = (i / (data.length - 1)) * width
+    const y = height - ((val - min) / range) * height
+    return `${x},${y}`
+  })
+
+  const pathD = `M ${points.join(' L ')}`
+
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="w-full"
+      style={{ height: '24px' }}
+      preserveAspectRatio="none"
+    >
+      <path
+        d={pathD}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        opacity="0.45"
+        className="sparkline-path"
+      />
+    </svg>
   )
 }
 

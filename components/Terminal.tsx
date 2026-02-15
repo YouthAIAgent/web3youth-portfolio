@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, KeyboardEvent, FC } from 'react'
+import { useState, useRef, useEffect, KeyboardEvent, FC, useCallback } from 'react'
 import { TERMINAL_COMMANDS } from '@/lib/constants'
 
 const Terminal: FC = () => {
@@ -8,7 +8,7 @@ const Terminal: FC = () => {
   const [currentInput, setCurrentInput] = useState('')
   const [commandHistory, setCommandHistory] = useState<string[]>([])
   const [historyIndex, setHistoryIndex] = useState(-1)
-  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [matrixActive, setMatrixActive] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const terminalRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLDivElement>(null)
@@ -24,7 +24,7 @@ const Terminal: FC = () => {
           observer.disconnect()
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     )
     if (sectionRef.current) observer.observe(sectionRef.current)
     return () => observer.disconnect()
@@ -36,27 +36,59 @@ const Terminal: FC = () => {
     }
   }, [history])
 
-  const processCommand = (cmd: string) => {
+  const triggerMatrix = useCallback(() => {
+    setMatrixActive(true)
+    setTimeout(() => setMatrixActive(false), 4000)
+  }, [])
+
+  const processCommand = useCallback((cmd: string) => {
     const trimmed = cmd.trim().toLowerCase()
 
-    if (trimmed === 'clear') {
+    if (!trimmed) return
+
+    const result = TERMINAL_COMMANDS[trimmed]
+
+    if (result === 'CLEAR') {
       setHistory([])
+      setCommandHistory(prev => [cmd, ...prev])
+      setHistoryIndex(-1)
       return
     }
 
-    const output = TERMINAL_COMMANDS[trimmed] || `Command not found: ${trimmed}\nType 'help' for available commands.`
+    if (result === 'MATRIX') {
+      triggerMatrix()
+      setHistory(prev => [...prev, {
+        input: cmd,
+        output: `[!] INITIATING HACK SEQUENCE...
+[▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
+
+⚠️  ACCESS DENIED
+
+Firewall: ACTIVE
+IDS: MONITORING  
+Shield: REKT Shield v2.0
+
+Nice try. Maybe hire me instead? 💀`
+      }])
+      setCommandHistory(prev => [cmd, ...prev])
+      setHistoryIndex(-1)
+      return
+    }
+
+    const output = typeof result === 'string'
+      ? result
+      : `command not found: ${trimmed}\nType 'help' for available commands.`
 
     setHistory(prev => [...prev, { input: cmd, output }])
     setCommandHistory(prev => [cmd, ...prev])
     setHistoryIndex(-1)
-  }
+  }, [triggerMatrix])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       if (currentInput.trim()) {
         processCommand(currentInput)
         setCurrentInput('')
-        setSuggestions([])
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
@@ -78,131 +110,136 @@ const Terminal: FC = () => {
     } else if (e.key === 'Tab') {
       e.preventDefault()
       if (currentInput.trim()) {
-        const matches = availableCommands.filter(c => c.startsWith(currentInput.trim().toLowerCase()))
+        const matches = availableCommands.filter(c =>
+          c.startsWith(currentInput.trim().toLowerCase())
+        )
         if (matches.length === 1) {
           setCurrentInput(matches[0])
-          setSuggestions([])
-        } else if (matches.length > 1) {
-          setSuggestions(matches)
         }
       }
     }
   }
 
-  const handleInputChange = (value: string) => {
-    setCurrentInput(value)
-    if (value.trim()) {
-      const matches = availableCommands.filter(c => c.startsWith(value.trim().toLowerCase()))
-      setSuggestions(matches.length > 0 && matches.length <= 5 ? matches : [])
-    } else {
-      setSuggestions([])
-    }
-  }
-
   return (
-    <section id="terminal" ref={sectionRef} className="relative z-10 py-20 px-4">
+    <section id="terminal" ref={sectionRef} className="relative z-10 py-16 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Section header */}
-        <div className={`mb-8 ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}>
-          <p className="text-gray-500 text-sm mb-2 tracking-widest">{'// interactive_terminal'}</p>
-          <h2 className="text-3xl md:text-4xl font-bold neon-lime">
-            Terminal
+        {/* Header */}
+        <div className={`mb-6 ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}>
+          <h2 className="text-xl md:text-2xl font-bold text-[#00ffd5] text-glow-cyan">
+            {'>'} TERMINAL
           </h2>
-          <p className="text-gray-400 mt-3">
-            Try it out. Type <span className="text-neon-lime">help</span> to get started.
+          <p className="text-[#475569] text-xs mt-1.5">
+            Type &apos;help&apos; to explore. Tab to autocomplete.
           </p>
         </div>
 
         {/* Terminal window */}
         <div
-          className={`glass rounded-xl border border-neon-lime/20 glow-lime overflow-hidden
-            ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}
+          className={`bg-[#040712] border border-white/[0.06] rounded-lg overflow-hidden ${
+            isVisible ? 'animate-fade-in' : 'opacity-0'
+          }`}
           style={{ animationDelay: '200ms' }}
         >
           {/* Terminal header */}
-          <div className="flex items-center px-4 py-3 bg-black/30 border-b border-white/5">
-            <div className="flex space-x-2">
-              <div className="w-3 h-3 rounded-full bg-red-500" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500" />
-              <div className="w-3 h-3 rounded-full bg-green-500" />
+          <div className="flex items-center px-4 py-2.5 bg-[#0a0e1a] border-b border-white/[0.04]">
+            <div className="flex space-x-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#f43f5e]/50" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#fbbf24]/50" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#22c55e]/50" />
             </div>
-            <span className="text-gray-500 text-xs ml-4 flex-1">visitor@web3youth:~</span>
-            <div className="flex items-center space-x-2">
-              <span className="text-neon-green text-xs">CONNECTED</span>
-              <div className="pulse-dot bg-neon-green" />
+            <span className="text-[#475569] text-[10px] ml-3 flex-1">
+              visitor@web3youth:~ [CONNECTED]
+            </span>
+            <div className="flex items-center space-x-1.5">
+              <span className="text-[#22c55e] text-[10px]">●</span>
+              <span className="text-[#475569] text-[10px]">LIVE</span>
             </div>
           </div>
 
           {/* Terminal body */}
           <div
             ref={terminalRef}
-            className="p-4 h-80 md:h-96 overflow-y-auto terminal-body bg-[#0a0e1a]/80 cursor-text"
+            className={`p-4 h-80 md:h-[420px] overflow-y-auto terminal-body cursor-text relative`}
             onClick={() => inputRef.current?.focus()}
           >
-            {/* Welcome message */}
-            <div className="text-gray-500 text-sm mb-4">
-              <p>Welcome to Web3Youth Terminal v2.0</p>
-              <p>Type &apos;help&apos; for available commands.</p>
-              <p className="text-gray-600">─────────────────────────────────</p>
+            {/* Matrix rain overlay */}
+            {matrixActive && <MatrixRain />}
+
+            {/* Welcome */}
+            <div className="text-xs mb-4">
+              <p className="text-[#22c55e]">Web3Youth Terminal v2.0</p>
+              <p className="text-[#334155]">Type &apos;help&apos; for available commands.</p>
+              <p className="text-[#1e293b]">────────────────────────────────</p>
             </div>
 
-            {/* Command history */}
+            {/* History */}
             {history.map((entry, i) => (
               <div key={i} className="mb-3">
-                <div className="flex items-center text-sm">
-                  <span className="text-neon-green">visitor@web3youth</span>
-                  <span className="text-gray-500">:</span>
-                  <span className="text-neon-cyan">~</span>
-                  <span className="text-gray-500">$ </span>
-                  <span className="text-gray-300 ml-1">{entry.input}</span>
+                <div className="flex items-center text-xs">
+                  <span className="text-[#22c55e]">visitor</span>
+                  <span className="text-[#334155]">@</span>
+                  <span className="text-[#00ffd5]">web3youth</span>
+                  <span className="text-[#334155]">:~$ </span>
+                  <span className="text-[#94a3b8] ml-1">{entry.input}</span>
                 </div>
-                <pre className="text-gray-400 text-sm mt-1 whitespace-pre-wrap font-mono leading-relaxed">
+                <pre className="text-[#64748b] text-xs mt-1 whitespace-pre-wrap font-mono leading-relaxed">
                   {entry.output}
                 </pre>
               </div>
             ))}
 
-            {/* Current input line */}
-            <div className="flex items-center text-sm">
-              <span className="text-neon-green">visitor@web3youth</span>
-              <span className="text-gray-500">:</span>
-              <span className="text-neon-cyan">~</span>
-              <span className="text-gray-500">$ </span>
+            {/* Input line */}
+            <div className="flex items-center text-xs">
+              <span className="text-[#22c55e]">visitor</span>
+              <span className="text-[#334155]">@</span>
+              <span className="text-[#00ffd5]">web3youth</span>
+              <span className="text-[#334155]">:~$ </span>
               <input
                 ref={inputRef}
                 type="text"
                 value={currentInput}
-                onChange={(e) => handleInputChange(e.target.value)}
+                onChange={(e) => setCurrentInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent border-none outline-none text-gray-300 ml-1 font-mono text-sm caret-neon-cyan"
+                className="flex-1 bg-transparent border-none outline-none text-[#94a3b8] ml-1 font-mono text-xs caret-[#00ffd5]"
                 autoComplete="off"
                 spellCheck={false}
                 aria-label="Terminal input"
               />
             </div>
-
-            {/* Suggestions */}
-            {suggestions.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-2">
-                {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      setCurrentInput(s)
-                      setSuggestions([])
-                      inputRef.current?.focus()
-                    }}
-                    className="text-xs text-neon-lime/60 hover:text-neon-lime transition-colors cursor-pointer"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>
     </section>
+  )
+}
+
+// Matrix rain effect inside terminal
+const MatrixRain: FC = () => {
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789'
+  const columns = 40
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-10 opacity-30">
+      {Array.from({ length: columns }).map((_, i) => {
+        const left = (i / columns) * 100
+        const delay = Math.random() * 3
+        const duration = 2 + Math.random() * 3
+        const char = chars[Math.floor(Math.random() * chars.length)]
+        return (
+          <span
+            key={i}
+            className="absolute text-[#22c55e] text-[10px] font-mono"
+            style={{
+              left: `${left}%`,
+              top: '-20px',
+              animation: `matrix-fall ${duration}s ${delay}s linear infinite`,
+            }}
+          >
+            {char}
+          </span>
+        )
+      })}
+    </div>
   )
 }
 

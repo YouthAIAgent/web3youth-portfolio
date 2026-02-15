@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState, FC } from 'react'
-import { SERVICES } from '@/lib/constants'
+import { FC, useEffect, useRef, useState } from 'react'
+import { SERVICE_CATEGORIES } from '@/lib/constants'
 
 const Services: FC = () => {
   const ref = useRef<HTMLDivElement>(null)
@@ -21,71 +21,53 @@ const Services: FC = () => {
     return () => observer.disconnect()
   }, [])
 
-  const getColorClasses = (color: string) => {
-    switch (color) {
-      case 'cyan': return { text: 'text-neon-cyan', border: 'border-neon-cyan/20', hoverGlow: 'glow-cyan-hover', tag: 'bg-neon-cyan/10 text-neon-cyan border-neon-cyan/20' }
-      case 'magenta': return { text: 'text-neon-magenta', border: 'border-neon-magenta/20', hoverGlow: 'glow-magenta-hover', tag: 'bg-neon-magenta/10 text-neon-magenta border-neon-magenta/20' }
-      case 'amber': return { text: 'text-neon-amber', border: 'border-neon-amber/20', hoverGlow: 'glow-amber-hover', tag: 'bg-neon-amber/10 text-neon-amber border-neon-amber/20' }
-      case 'lime': return { text: 'text-neon-lime', border: 'border-neon-lime/20', hoverGlow: 'glow-lime-hover', tag: 'bg-neon-lime/10 text-neon-lime border-neon-lime/20' }
-      case 'pink': return { text: 'text-neon-pink', border: 'border-neon-pink/20', hoverGlow: 'glow-magenta-hover', tag: 'bg-neon-pink/10 text-neon-pink border-neon-pink/20' }
-      default: return { text: 'text-neon-cyan', border: 'border-neon-cyan/20', hoverGlow: 'glow-cyan-hover', tag: 'bg-neon-cyan/10 text-neon-cyan border-neon-cyan/20' }
-    }
-  }
-
   return (
-    <section id="services" ref={ref} className="relative z-10 py-20 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Section header */}
-        <div className={`mb-12 ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}>
-          <p className="text-gray-500 text-sm mb-2 tracking-widest">{'// services.config'}</p>
-          <h2 className="text-3xl md:text-4xl font-bold neon-magenta">
-            Services
+    <section id="services" ref={ref} className="relative z-10 py-16 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className={`mb-6 ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}>
+          <h2 className="text-xl md:text-2xl font-bold text-[#00ffd5] text-glow-cyan">
+            {'>'} SERVICES
           </h2>
-          <p className="text-gray-400 mt-3 max-w-2xl">
-            Full-stack Web3 development, AI agent architecture, and security auditing.
-            From smart contracts to multi-agent swarms.
+          <p className="text-[#475569] text-xs mt-1.5">
+            From audits to agents. Everything priced in crypto.
           </p>
         </div>
 
-        {/* Services grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {SERVICES.map((service, i) => {
-            const colors = getColorClasses(service.color)
-            return (
-              <div
-                key={i}
-                className={`glass p-5 rounded-xl border ${colors.border} card-hover ${colors.hoverGlow}
-                  ${isVisible ? 'animate-fade-in' : 'opacity-0'}`}
-                style={{ animationDelay: `${Math.min(i * 80, 800)}ms` }}
-              >
-                {/* Icon + Title */}
-                <div className="flex items-start space-x-3 mb-3">
-                  <span className="text-2xl">{service.icon}</span>
-                  <div className="flex-1">
-                    <h3 className="text-white font-semibold text-sm">{service.title}</h3>
-                    <span className={`text-xs font-bold ${colors.text}`}>{service.price}</span>
+        {/* Service rows — terminal style */}
+        <div className="space-y-0">
+          {SERVICE_CATEGORIES.map((service, i) => (
+            <div
+              key={service.name}
+              className={`service-row border border-white/[0.04] border-b-0 last:border-b p-4 first:rounded-t-lg last:rounded-b-lg cursor-default ${
+                isVisible ? 'animate-fade-in' : 'opacity-0'
+              }`}
+              style={{ animationDelay: `${i * 80 + 200}ms` }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2.5 mb-1">
+                    <span className="text-base">{service.icon}</span>
+                    <h3 className="text-[#e2e8f0] text-sm font-medium">{service.name}</h3>
+                  </div>
+                  <p className="text-[#475569] text-xs ml-[30px]">{service.description}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2 ml-[30px]">
+                    {service.tags.map(tag => (
+                      <span
+                        key={tag}
+                        className="text-[10px] text-[#64748b] border border-white/[0.06] rounded px-1.5 py-0.5"
+                      >
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                 </div>
-
-                {/* Description */}
-                <p className="text-gray-400 text-xs leading-relaxed mb-3">
-                  {service.description}
-                </p>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1.5">
-                  {service.tags.map((tag, j) => (
-                    <span
-                      key={j}
-                      className={`text-[10px] px-2 py-0.5 rounded-full border ${colors.tag}`}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                <span className="text-[#fbbf24] text-xs font-semibold whitespace-nowrap flex-shrink-0 text-glow-amber">
+                  {service.price}
+                </span>
               </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </section>

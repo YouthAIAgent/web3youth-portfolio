@@ -4,7 +4,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Web3Youth — Solana Developer | AI Agent Architect | Security Auditor',
   description: 'Building autonomous AI agents and secure smart contracts on Solana. Quoted by Solana co-founder toly. 14.3K followers. Hire for audits, bots, dApps.',
-  keywords: ['Solana', 'AI Agent', 'Smart Contract Audit', 'Web3', 'Security', 'Blockchain Developer'],
+  keywords: ['Solana', 'AI Agent', 'Smart Contract Audit', 'Web3', 'Security', 'Blockchain Developer', 'AgentWallet'],
   authors: [{ name: 'Chiranjib', url: 'https://web3youth.in' }],
   openGraph: {
     title: 'Web3Youth — Solana Developer | AI Agent Architect | Security Auditor',
@@ -43,8 +43,6 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className="font-mono antialiased">
-        {/* CRT Scanline Overlay */}
-        <div className="crt-overlay" />
         {children}
       </body>
     </html>

@@ -9,7 +9,7 @@ interface GlitchTextProps {
 
 const GlitchText: FC<GlitchTextProps> = ({ text, className = '' }) => {
   return (
-    <span className={`glitch relative inline-block ${className}`} data-text={text}>
+    <span className={`glitch ${className}`} data-text={text}>
       {text}
     </span>
   )
